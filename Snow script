@@ -1,0 +1,114 @@
+-- Snow Scripts GUI - fully functional with real spin
+local player = game.Players.LocalPlayer
+local char = player.Character or player.CharacterAdded:Wait()
+local hrp = char:WaitForChild("HumanoidRootPart")
+local RunService = game:GetService("RunService")
+
+-- GUI
+local gui = Instance.new("ScreenGui")
+gui.Name = "Snow Scripts"
+gui.Parent = player:WaitForChild("PlayerGui") -- חובה ל-PlayerGui
+
+local frame = Instance.new("Frame", gui)
+frame.Size = UDim2.fromScale(0.25, 0.25)
+frame.Position = UDim2.fromScale(0.375, 0.35)
+frame.BackgroundColor3 = Color3.fromRGB(20,20,30)
+frame.BorderSizePixel = 0
+frame.Active = true
+frame.Draggable = true
+Instance.new("UICorner", frame).CornerRadius = UDim.new(0,16)
+
+-- Title
+local title = Instance.new("TextLabel", frame)
+title.Size = UDim2.fromScale(1, 0.2)
+title.BackgroundTransparency = 1
+title.Text = "❄ Snow Scripts ❄"
+title.Font = Enum.Font.GothamBold
+title.TextScaled = true
+title.TextColor3 = Color3.new(1,1,1)
+
+-- RGB title effect
+task.spawn(function()
+	while true do
+		for i = 0, 1, 0.01 do
+			title.TextColor3 = Color3.fromHSV(i,1,1)
+			task.wait(0.03)
+		end
+	end
+end)
+
+-- Buttons
+local function makeButton(text, posY)
+	local b = Instance.new("TextButton", frame)
+	b.Size = UDim2.fromScale(0.8, 0.22)
+	b.Position = UDim2.fromScale(0.1, posY)
+	b.Text = text
+	b.Font = Enum.Font.Gotham
+	b.TextScaled = true
+	b.BackgroundColor3 = Color3.fromRGB(40,40,60)
+	b.TextColor3 = Color3.new(1,1,1)
+	Instance.new("UICorner", b).CornerRadius = UDim.new(0,12)
+	return b
+end
+
+local autoBatBtn = makeButton("Auto Bat : OFF", 0.3)
+local spinBtn = makeButton("Spin : OFF", 0.6)
+
+-- Snow effect
+for i = 1, 35 do
+	local snow = Instance.new("Frame", frame)
+	snow.Size = UDim2.fromOffset(4,4)
+	snow.BackgroundColor3 = Color3.new(1,1,1)
+	snow.BorderSizePixel = 0
+	Instance.new("UICorner", snow).CornerRadius = UDim.new(1,0)
+
+	task.spawn(function()
+		while true do
+			snow.Position = UDim2.fromScale(math.random(), -0.1)
+			local speed = math.random(3,6)/10
+			for y = -0.1, 1.1, speed*0.01 do
+				snow.Position = UDim2.fromScale(snow.Position.X.Scale, y)
+				task.wait(0.03)
+			end
+		end
+	end)
+end
+
+-- Auto Bat logic
+local autoBat = false
+autoBatBtn.MouseButton1Click:Connect(function()
+	autoBat = not autoBat
+	autoBatBtn.Text = autoBat and "Auto Bat : ON" or "Auto Bat : OFF"
+
+	task.spawn(function()
+		while autoBat do
+			local tool = char:FindFirstChildOfClass("Tool")
+			if tool then
+				tool:Activate()
+			end
+			task.wait(0.2)
+		end
+	end)
+end)
+
+-- Spin logic with BodyAngularVelocity (real spin)
+local spinning = false
+local spinAngular = nil
+
+spinBtn.MouseButton1Click:Connect(function()
+	spinning = not spinning
+	spinBtn.Text = spinning and "Spin : ON" or "Spin : OFF"
+
+	if spinning then
+		if not spinAngular or not spinAngular.Parent then
+			spinAngular = Instance.new("BodyAngularVelocity")
+			spinAngular.MaxTorque = Vector3.new(0, math.huge, 0) -- סיבוב סביב Y
+			spinAngular.AngularVelocity = Vector3.new(0, 15, 0)    -- מהירות סיבוב
+			spinAngular.Parent = hrp
+		end
+	else
+		if spinAngular and spinAngular.Parent then
+			spinAngular:Destroy()
+		end
+	end
+end)
